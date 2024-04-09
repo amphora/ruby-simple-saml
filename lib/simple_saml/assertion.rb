@@ -1,20 +1,20 @@
 require 'builder'
+require 'securerandom'
 
 module SimpleSaml
     class Assertion
         attr_reader :issuer, :user, :audience, :authn_context_class_ref
 
-        def initialize(issuer:, principal:, audience:, authn_context_class_ref:, assertion_consumer_service_url:, 
-            nameid_getter: nil, assertion_audience: nil )
-            @issuer = issuer
+        def initialize(principal:, issuer: nil, audience: nil, 
+            assertion_consumer_service_url: nil, nameid_getter: nil, assertion_audience: nil, saml_request: nil)
+            
+            @issuer = saml_request&.issuer || issuer
             @principal = principal
-            @audience = audience
-            @authn_context_class_ref = authn_context_class_ref
-            @assertion_consumer_service_url = assertion_consumer_service_url
-            @nameid_getter = nameid_getter
-            @assertion_audience = assertion_audience || @assertion_consumer_service_url
+            @audience = saml_request&.provider_name
+            @assertion_consumer_service_url = saml_request&.assertion_consumer_service_url || assertion_consumer_service_url
+            # @nameid_getter = saml_request&.nameid_getter
+            
         end
-
         
         def build
         # Build the SAML assertion XML document
@@ -27,7 +27,7 @@ module SimpleSaml
         xml = Builder::XmlMarkup.new(indent: 2)
         xml.instruct! :xml, version: "1.0", encoding: "UTF-8"
 
-        xml.Assertion(ID: "ID", 
+        xml.Assertion(ID: "_#{SecureRandom.uuid}", 
                       IssueInstant: "2023-04-01T00:00:00Z", 
                       Version: "2.0", 
                       xmlns: "urn:oasis:names:tc:SAML:2.0:assertion") do |assertion|
@@ -42,7 +42,7 @@ module SimpleSaml
             end
             assertion.Conditions NotBefore: "2023-04-01T00:00:00Z", NotOnOrAfter: "2023-04-01T01:00:00Z" do |conditions|
                 conditions.AudienceRestriction do |restriction|
-                restriction.Audience @assertion_audience
+                restriction.Audience @audience
                 end
             end
             assertion.AuthnStatement AuthnInstant: "2023-04-01T00:00:00Z" do |statement|
@@ -64,25 +64,3 @@ module SimpleSaml
         end
     end
 end
-=begin
-<?xml version="1.0" encoding="UTF-8"?>
-<Assertion
-  xmlns="urn:oasis:names:tc:SAML:2.0:assertion" ID="ID" IssueInstant="2023-04-01T00:00:00Z" Version="2.0">
-  <Issuer>https://idp.example.com</Issuer>
-  <ds:Signature
-    xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
-    <ds:SignedInfo>
-      <ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"></ds:CanonicalizationMethod>
-      <ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"></ds:SignatureMethod>
-      <ds:Reference URI="ID">
-        <ds:Transforms>
-          <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></ds:Transform>
-        </ds:Transforms>
-        <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"></ds:DigestMethod>
-        <ds:DigestValue></ds:DigestValue>
-    </ds:Reference>
-    </ds:SignedInfo>
-    <ds:SignatureValue></ds:SignatureValue>
-  </ds:Signature>
-</Assertion>
-=end

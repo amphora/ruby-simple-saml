@@ -8,6 +8,7 @@ module SimpleSaml
     require 'simple_saml/configurator'
     require 'simple_saml/xml_security'
     require 'simple_saml/saml_request'
+    require 'simple_saml/saml_response'
 
 
     class Error < StandardError; end

@@ -7,36 +7,38 @@ FROM_URL = "nVbZkqJIFH2fiPkHw37ssFgEFaKtiWRTVJBNLX1jSRBlk0QT%2FfpBraq2arorZubBMO
 
 module SimpleSaml
     class SamlRequest 
+        attr_reader :id, :version, :provider_name, :issue_instant, :destination, :protocol_binding, :assertion_consumer_service_url, :issuer, :name_id_format, :name_id_allow_create
+
         def initialize(request_from_params)
             @doc = Nokogiri::XML(decode_and_inflate(request_from_params))
 
             authn_request = @doc.at_xpath('//samlp:AuthnRequest', 'samlp' => 'urn:oasis:names:tc:SAML:2.0:protocol')
             name_id_policy = @doc.at_xpath('//samlp:NameIDPolicy', 'samlp' => 'urn:oasis:names:tc:SAML:2.0:protocol')
-            # Extracting specific attributes
-            id = authn_request['ID']
-            version = authn_request['Version']
-            provider_name = authn_request['ProviderName']
-            issue_instant = authn_request['IssueInstant']
-            destination = authn_request['Destination']
-            protocol_binding = authn_request['ProtocolBinding']
-            assertion_consumer_service_url = authn_request['AssertionConsumerServiceURL']
-
-            issuer = @doc.at_xpath('//saml:Issuer', 'saml' => 'urn:oasis:names:tc:SAML:2.0:assertion').text
-
-            name_id_format = name_id_policy['Format']
-            name_id_allow_create = name_id_policy['AllowCreate'] || false
-            puts "SAML Request Information:"
-            puts "-------------------------"
-            puts "ID: #{id}"
-            puts "Version: #{version}"
-            puts "ProviderName: #{provider_name}"
-            puts "IssueInstant: #{issue_instant}"
-            puts "Destination: #{destination}"
-            puts "ProtocolBinding: #{protocol_binding}"
-            puts "AssertionConsumerServiceURL: #{assertion_consumer_service_url}"
-            puts "Issuer: #{issuer}"
-            puts "NameIDPolicy Format: #{name_id_format}"
-            puts "NameIDPolicy AllowCreate: #{name_id_allow_create}"
+            
+            # Extracting specific attributes and storing them in instance variables
+            @id = authn_request['ID']
+            @version = authn_request['Version']
+            @provider_name = authn_request['ProviderName']
+            @issue_instant = authn_request['IssueInstant']
+            @destination = authn_request['Destination']
+            @protocol_binding = authn_request['ProtocolBinding']
+            @assertion_consumer_service_url = authn_request['AssertionConsumerServiceURL']
+            @issuer = @doc.at_xpath('//saml:Issuer', 'saml' => 'urn:oasis:names:tc:SAML:2.0:assertion').text
+            @name_id_format = name_id_policy['Format']
+            @name_id_allow_create = name_id_policy['AllowCreate'] || false
+        
+            # puts "SAML Request Information:"
+            # puts "-------------------------"
+            # puts "ID: #{id}"
+            # puts "Version: #{version}"
+            # puts "ProviderName: #{provider_name}"
+            # puts "IssueInstant: #{issue_instant}"
+            # puts "Destination: #{destination}"
+            # puts "ProtocolBinding: #{protocol_binding}"
+            # puts "AssertionConsumerServiceURL: #{assertion_consumer_service_url}"
+            # puts "Issuer: #{issuer}"
+            # puts "NameIDPolicy Format: #{name_id_format}"
+            # puts "NameIDPolicy AllowCreate: #{name_id_allow_create}"
 
         end
 
