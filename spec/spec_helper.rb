@@ -1,6 +1,7 @@
 # frozen_string_literal: true
-
-require "simple/saml"
+puts $LOAD_PATH
+require 'xmldsig'
+require "simple_saml"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure

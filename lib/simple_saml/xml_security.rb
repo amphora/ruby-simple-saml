@@ -3,50 +3,72 @@ require 'nokogiri'
 
 UNSIGNED = <<-XML
 <?xml version="1.0" encoding="UTF-8"?>
-<Assertion
-  xmlns="urn:oasis:names:tc:SAML:2.0:assertion" ID="ID" IssueInstant="2023-04-01T00:00:00Z" Version="2.0">
-  <Issuer>https://idp.example.com</Issuer>
-  <ds:Signature
-    xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+<samlp:AuthnRequest xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" ID="pfx41d8ef22-e612-8c50-9960-1b16f15741b3" Version="2.0" ProviderName="SP test" IssueInstant="2014-07-16T23:52:45Z" Destination="http://idp.example.com/SSOService.php" ProtocolBinding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" AssertionConsumerServiceURL="http://sp.example.com/demo1/index.php?acs">
+  <saml:Issuer>http://sp.example.com/demo1/metadata.php</saml:Issuer>
+  <ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
     <ds:SignedInfo>
-      <ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"></ds:CanonicalizationMethod>
-      <ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"></ds:SignatureMethod>
-      <ds:Reference URI="#ID">
+      <ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+      <ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
+      <ds:Reference URI="#pfx41d8ef22-e612-8c50-9960-1b16f15741b3">
         <ds:Transforms>
-          <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></ds:Transform>
+          <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
+          <ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
         </ds:Transforms>
-        <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"></ds:DigestMethod>
+        <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
         <ds:DigestValue></ds:DigestValue>
       </ds:Reference>
     </ds:SignedInfo>
     <ds:SignatureValue></ds:SignatureValue>
+    <ds:KeyInfo>
+      <ds:X509Data>
+        <ds:X509Certificate>cr</ds:X509Certificate>
+      </ds:X509Data>
+    </ds:KeyInfo>
   </ds:Signature>
-  <Subject>
-    <NameID Format="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress">email@email.com</NameID>
-    <SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:bearer">
-      <SubjectConfirmationData NotOnOrAfter="2023-04-01T01:00:00Z" Recipient="https://sp.example.com"></SubjectConfirmationData>
-    </SubjectConfirmation>
-  </Subject>
-  <Conditions NotBefore="2023-04-01T00:00:00Z" NotOnOrAfter="2023-04-01T01:00:00Z">
-    <AudienceRestriction>
-      <Audience>https://sp.example.com</Audience>
-    </AudienceRestriction>
-  </Conditions>
-  <AuthnStatement AuthnInstant="2023-04-01T00:00:00Z">
-    <AuthnContext>
-      <AuthnContextClassRef>urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport</AuthnContextClassRef>
-    </AuthnContext>
-  </AuthnStatement>
-  <AttributeStatement>
-    <Attribute Name="emailAddress" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:basic">
-      <AttributeValue>user@example.com</AttributeValue>
-    </Attribute>
-  </AttributeStatement>
-  <AuthzDecisionStatement Decision="Permit" Resource="https://resource.example.com">
-    <Action Namespace="urn:oasis:names:tc:SAML:1.0:action:rwedc">Read</Action>
-  </AuthzDecisionStatement>
-</Assertion>
+  <samlp:NameIDPolicy Format="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress" AllowCreate="true"/>
+  <samlp:RequestedAuthnContext Comparison="exact">
+    <saml:AuthnContextClassRef>urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport</saml:AuthnContextClassRef>
+  </samlp:RequestedAuthnContext>
+</samlp:AuthnRequest>
 XML
+
+CERTIFICATE = <<-CERT
+-----BEGIN CERTIFICATE-----
+MIIGHzCCBAegAwIBAgIUCQ8owdhoaVRKok9w5roLJIYo24wwDQYJKoZIhvcNAQEL
+BQAwgZ4xCzAJBgNVBAYTAlVLMRIwEAYDVQQIDAlXb2tpbmdoYW0xDzANBgNVBAcM
+BkxvbmRvbjEnMCUGA1UECgweYmV0dGVyY29udmVyc2F0aW9ucy5mb3VuZGF0aW9u
+MQwwCgYDVQQDDANiY2YxMzAxBgkqhkiG9w0BCQEWJGhlbGxvQGJldHRlcmNvbnZl
+cnNhdGlvbnMuZm91bmRhdGlvbjAeFw0yNDAzMjExMDU1MTRaFw0yNTAzMjExMDU1
+MTRaMIGeMQswCQYDVQQGEwJVSzESMBAGA1UECAwJV29raW5naGFtMQ8wDQYDVQQH
+DAZMb25kb24xJzAlBgNVBAoMHmJldHRlcmNvbnZlcnNhdGlvbnMuZm91bmRhdGlv
+bjEMMAoGA1UEAwwDYmNmMTMwMQYJKoZIhvcNAQkBFiRoZWxsb0BiZXR0ZXJjb252
+ZXJzYXRpb25zLmZvdW5kYXRpb24wggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIK
+AoICAQClChA/k4AC1SiydrPYz5IlNUXvOoisZKBgg6N4b1fVBBxWev1ALz/oAuZW
+HSzoY49PWz8zHJ4bpsjKeVcZr+qEG1uRa+sBrcnRQh+WyIjZ6W5mOBzjzzJd0Ss4
+wO/lR8s64bDUQTnsLKudzYkukJSZXapjIUSPGIwV07e4oq6XRLONt4ZwcojuTZ6k
+CXrk5ifIDeAvxPjFVge++Dz2HWGtR9FVlFqs5O5WVTYt6qA+Eh7IvTkQjMqGP+zl
+PE28DAU6EYAyi8bY8kMIWtHJypeT4YLCdBQ5OEGAD80/j2/fduSvlMq/jzFODTeJ
+dKqWKZt6iVfh3gzPAGqFWV8RF0RkkBE0ZDVkKdKjfbVrIkBvM7wIlLlrBgZN/rzP
+lqymB1VBPAj7YRK71e9vDj6n9m+digFE8fIIPaeBzlYd0z45Re9MNPFUHXFHrWxU
+wkXD26tc3xfH19yHSgnwwNpXZSCdxKZRZwYa6QiJh2RCW0gvovVcF0Yc1X7R1jbv
+OAUXL6vOje5w2Oi+81r8DjWwrE+TIbutF3eeZRD2jwRRgE3COvR+d0e6Y9aYRi4k
+VxAeyB7/0dJbzOl8BC/KYtL6MqafaNC1elXsj/e60Iud9RsUlrGv0RKdwkczdOnn
+CriVC8+KWifw/2BkNT3gU1NOAgcB8LLr9lLfiBxOzT8dlphW4QIDAQABo1MwUTAd
+BgNVHQ4EFgQUpj++yO9GxH5XVUZCwL2XW1Q4A24wHwYDVR0jBBgwFoAUpj++yO9G
+xH5XVUZCwL2XW1Q4A24wDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOC
+AgEADycUThiDaMIBd5vRD+qRYDFU7AFp+v844CuT03bgDW5KAHactnKsuvBlQJS3
+dZTV4IDPhpWXXVqac0XCtfq5PJfp71OSaWN3tDfVlCroEheBzayAs6nP1bxg/cog
+P06fe0znBmCoKCsnFni5mwwJtDWbSytWOznODNna5uzND3D9TJ26+1V93Re2jY4u
+IA+gj4PjY0UmUNjWKtNHvQSRKkpnxS/dPaCYqQvEvD6QPFD0v/nU4LcVfs8evLjo
+MHK3zBxYSzLsBAoddxaxZCpr2ns6njt9ywXQFRfopkhzMttbW6WnrBHu2KyJRumf
+mBYt9Fg/wuzD2Hkclz9zQgjQ6Ai3CoBG8Yhy8DAqAjfTMOMGeJ5j3bWo4Byr2p5q
+8QGWiS/aE3m2N5fRjFfba46xk4Kv2XTvDoDSBpXYTThNnsp/2F8bBg9d2IWvkLyb
++D72x38r4xbgGklA0hgWjyfsvsHptIhXfzlV8hnyhgFThRKxhsrjhRzuI769V08f
+cq//lGF0qaNCBYL3WPGPN46HyqwxOZQfSq43ZfVNxN3KLcY4scjb719h/4HakViw
+ELcnqAghsySuiQK7D7klzJiWoyyN8IApwEvpwLAz297wQXkZTvyvfLixDeztDYHM
+3OaMr5Sge7qrsK9DalQQ1cPH45IesWO5fwYksqsPxdpNlr4=
+-----END CERTIFICATE-----
+CERT
 
 module SimpleSaml
     module XMLSecurity
@@ -108,7 +130,40 @@ module SimpleSaml
         end
 
         def validate_request(saml_request)
-            
+
+            # Obtain the SP metadata, which includes the signing certificate
+            sp_entity_id = sp_entity_id_from_request(saml_request)
+            sp_metadata = SimpleSaml.config.get_sp_metadata(sp_entity_id)
+            sp_certificate_str = sp_metadata[:signing_certificate]
+            sp_certificate = OpenSSL::X509::Certificate.new(Base64.decode64(sp_certificate_str))
+
+            # Extract the certificate from the SAML assertion
+            assertion_certificate_str = saml_request.doc.at_xpath("//*[local-name()='X509Certificate']/text()").to_s
+            assertion_certificate = OpenSSL::X509::Certificate.new(Base64.decode64(assertion_certificate_str))
+
+            # Compare fingerprints
+            sp_fingerprint = Digest::SHA256.hexdigest(sp_certificate.to_der)
+            assertion_fingerprint = Digest::SHA256.hexdigest(assertion_certificate.to_der)
+
+            unless sp_fingerprint == assertion_fingerprint
+              raise "Certificate fingerprint mismatch"
+            end
+
+            # Validate the signature
+            signed_document = Xmldsig::SignedDocument.new(saml_request.doc)
+            unless signed_document.validate(assertion_certificate)
+              raise "Signature validation failed"
+            end
+
+            true
         end
+
+        private 
+
+        def sp_entity_id_from_request(saml_request)
+            issuer_element = saml_request.doc.at_xpath("//*[local-name()='Issuer']/text()")
+            sp_entity_id = issuer_element.to_s.strip unless issuer_element.nil?
+            sp_entity_id
+          end
     end
 end
