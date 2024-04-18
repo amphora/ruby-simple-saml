@@ -3,64 +3,79 @@ require 'securerandom'
 
 module SimpleSaml
     class Assertion
+        include SimpleSaml::XMLSecurity
+
         attr_reader :issuer, :user, :audience, :authn_context_class_ref
 
         def initialize(principal:, issuer: nil, audience: nil, 
-            assertion_consumer_service_url: nil, nameid_getter: nil, assertion_audience: nil, saml_request: nil)
-            
-            @issuer = saml_request&.issuer || issuer
+                       assertion_consumer_service_url: nil, assertion_audience: nil, saml_request: nil, sign: false)
+
+            # @issuer = saml_request&.issuer || issuer
             @principal = principal
-            @audience = saml_request&.provider_name
+            @audience = saml_request&.provider_name || saml_request&.issuer || issuer
             @assertion_consumer_service_url = saml_request&.assertion_consumer_service_url || assertion_consumer_service_url
-            # @nameid_getter = saml_request&.nameid_getter
+            @sign = sign
+
             
         end
         
-        def build
-        # Build the SAML assertion XML document
-        # if !nameid_getter
-        #     raise "NameID getter not defined for the Assertion"
-        # end
-        # nameid = nameid_getter.call(@principal)
+        def raw(include_declaration: false)
+            # Build the SAML assertion XML document
+            # if !nameid_getter
+            #     raise "NameID getter not defined for the Assertion"
+            # end
+            # nameid = nameid_getter.call(@principal)
 
-        # We will need to validate all of these inputs
-        xml = Builder::XmlMarkup.new(indent: 2)
-        xml.instruct! :xml, version: "1.0", encoding: "UTF-8"
+            nameid = SimpleSaml.config.nameid_getter&.call(@principal) || "email@email.com"
 
-        xml.Assertion(ID: "_#{SecureRandom.uuid}", 
-                      IssueInstant: "2023-04-01T00:00:00Z", 
-                      Version: "2.0", 
-                      xmlns: "urn:oasis:names:tc:SAML:2.0:assertion") do |assertion|
 
-            assertion.Issuer @issuer
-            assertion.Subject do |subject|
-                # So far we only support the email address format
-                subject.NameID "email@email.com", Format: "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-                subject.SubjectConfirmation(Method: "urn:oasis:names:tc:SAML:2.0:cm:bearer") do |confirmation|
-                confirmation.SubjectConfirmationData NotOnOrAfter: "2023-04-01T01:00:00Z", Recipient: @assertion_consumer_service_url
+            # We will need to validate all of these inputs
+            now = Time.now.utc
+            builder = Nokogiri::XML::Builder.new(encoding: 'UTF-8') do |xml|
+                xml.Assertion(ID: "_#{SecureRandom.uuid}", 
+                            IssueInstant: now.strftime("%Y-%m-%dT%H:%M:%SZ"), 
+                            Version: "2.0", 
+                            xmlns: "urn:oasis:names:tc:SAML:2.0:assertion") do
+
+                    xml.Issuer SimpleSaml.config.entity_id
+                    xml.Subject do
+                        # So far we only support the email address format
+                        xml.NameID nameid, Format: "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+                        xml.SubjectConfirmation(Method: "urn:oasis:names:tc:SAML:2.0:cm:bearer") do
+                            xml.SubjectConfirmationData NotOnOrAfter: (now + 5 * 60).strftime("%Y-%m-%dT%H:%M:%SZ"), Recipient: @assertion_consumer_service_url
+                        end
+                    end
+                    xml.Conditions NotBefore: now.strftime("%Y-%m-%dT%H:%M:%SZ"), NotOnOrAfter: (now + 5 * 60).strftime("%Y-%m-%dT%H:%M:%SZ") do
+                        xml.AudienceRestriction do
+                            xml.Audience @audience
+                        end
+                    end
+                    xml.AuthnStatement AuthnInstant: now.strftime("%Y-%m-%dT%H:%M:%SZ") do
+                        xml.AuthnContext do
+                            xml.AuthnContextClassRef "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"
+                        end
+                    end
+                    xml.AttributeStatement do
+                        xml.Attribute(Name: "emailAddress", NameFormat: "urn:oasis:names:tc:SAML:2.0:attrname-format:basic") do
+                            xml.AttributeValue nameid # So far nameid is the email address, so this is ok for now
+                        end
+                    end
+                    # This needs to be properly defined
+                    # xml.AuthzDecisionStatement(Decision: "Permit", Resource: "https://resource.example.com") do
+                    #     xml.Action "Read", Namespace: "urn:oasis:names:tc:SAML:1.0:action:rwedc"
+                    # end
                 end
             end
-            assertion.Conditions NotBefore: "2023-04-01T00:00:00Z", NotOnOrAfter: "2023-04-01T01:00:00Z" do |conditions|
-                conditions.AudienceRestriction do |restriction|
-                restriction.Audience @audience
-                end
-            end
-            assertion.AuthnStatement AuthnInstant: "2023-04-01T00:00:00Z" do |statement|
-                statement.AuthnContext do |context|
-                context.AuthnContextClassRef "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"
-                end
-            end
-            assertion.AttributeStatement do |attribute_statement|
-                attribute_statement.Attribute(Name: "emailAddress", NameFormat: "urn:oasis:names:tc:SAML:2.0:attrname-format:basic") do |attribute|
-                attribute.AttributeValue "user@example.com"
-                end
-            end
-            assertion.AuthzDecisionStatement(Decision: "Permit", Resource: "https://resource.example.com") do |decision_statement|
-                decision_statement.Action "Read", Namespace: "urn:oasis:names:tc:SAML:1.0:action:rwedc"
-            end
+
+            builder.doc
         end
 
-        xml.target!
+        def build
+            if @sign
+                sign_assertion(self)
+            else
+                self.raw
+            end
         end
     end
 end

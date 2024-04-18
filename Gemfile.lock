@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    simple-saml (0.1.1)
+    simple_saml (0.1.1)
       activesupport (>= 5.2)
       builder (>= 3.0)
       httparty
@@ -117,7 +117,7 @@ DEPENDENCIES
   rake (~> 13.0)
   rspec (~> 3.0)
   rubocop (~> 1.21)
-  simple-saml!
+  simple_saml!
   xmldsig
 
 BUNDLED WITH

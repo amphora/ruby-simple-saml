@@ -3,8 +3,8 @@
 require_relative "lib/simple_saml/version"
 
 Gem::Specification.new do |spec|
-  spec.name = "simple-saml"
-  spec.version = Simple::Saml::VERSION
+  spec.name = "simple_saml"
+  spec.version = SimpleSaml::VERSION
   spec.authors = ["Nkosi Khumalo"]
   spec.email = ["nkosik@amphora-research.com"]
 

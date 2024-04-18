@@ -50,13 +50,19 @@ module SimpleSaml
 
         def valid?
             # Check if the request is legitimately signed
-            validate_request(req)
+            validate_request(self)
         end
 
         private
 
         def decode_and_inflate(encoded_request)
-            url_decoded_request = CGI.unescape(encoded_request)
+            
+            if defined?(Rails)
+                url_decoded_request = encoded_request # Rails decodes for us
+            else
+                url_decoded_request = CGI.unescape(encoded_request)
+            end
+
             base_64_decoded_request = Base64.decode64(url_decoded_request)
             
             # Inflate the decoded request. Try to inflate, and if it fails, return the original decoded request

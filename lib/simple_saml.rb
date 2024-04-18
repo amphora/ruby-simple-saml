@@ -4,12 +4,11 @@ require_relative "simple_saml/version"
 
 
 module SimpleSaml
+    require 'simple_saml/xml_security'
     require "simple_saml/assertion"
     require 'simple_saml/configurator'
-    require 'simple_saml/xml_security'
     require 'simple_saml/saml_request'
     require 'simple_saml/saml_response'
-
 
     class Error < StandardError; end
     # Your code goes here...
@@ -21,7 +20,6 @@ module SimpleSaml
     def self.configure
         yield config
     end
-
     
     def self.generate_metadata_xml
         builder = Builder::XmlMarkup.new(indent: 2)

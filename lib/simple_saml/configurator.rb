@@ -6,8 +6,7 @@ require 'httparty'
 
 module SimpleSaml
   class Configurator
-
-
+    
     attr_accessor :x509_certificate
     attr_accessor :private_key
     attr_accessor :entity_id
@@ -20,6 +19,7 @@ module SimpleSaml
     attr_accessor :organisation_url
     attr_accessor :xml_lang
     attr_accessor :service_providers
+    attr_accessor :nameid_getter
     attr_accessor :logger
 
     def initialize(service_providers = [])
@@ -47,6 +47,7 @@ module SimpleSaml
         self.xml_lang = "en-GB"
 
         self.logger = defined?(::Rails) ? Rails.logger : ->(msg) { puts msg }
+        self.nameid_getter = nil
 
         # We expec
     end

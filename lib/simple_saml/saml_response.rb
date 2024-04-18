@@ -3,43 +3,62 @@ require 'securerandom'
 
 module SimpleSaml
     class SamlResponse 
-        def initialize(saml_request:, assertion_consumer_service_url: nil, issuer: nil)
+        include SimpleSaml::XMLSecurity
+
+        def initialize(saml_request:, principal: nil, assertion_consumer_service_url: nil, issuer: nil, sign_assertion: true)
 
             @saml_request = saml_request
             @assertion_consumer_service_url = saml_request&.assertion_consumer_service_url || assertion_consumer_service_url
 
             @issuer = saml_request&.issuer || issuer
             @assertion = SimpleSaml::Assertion.new(saml_request: saml_request, 
-                                                principal: nil,
+                                                principal: principal,
                                                 assertion_consumer_service_url:  @assertion_consumer_service_url,
-                                                issuer: @issuer)
+                                                issuer: @issuer,
+                                                sign: true)
 
         end
 
         def build
-            builder = Builder::XmlMarkup.new(indent: 2)
-            builder.instruct! :xml, version: "1.0", encoding: "UTF-8"
-
-            xml_str = builder.tag!("samlp:Response", 
-                    "xmlns:samlp" => "urn:oasis:names:tc:SAML:2.0:protocol", 
-                    "xmlns:saml" => "urn:oasis:names:tc:SAML:2.0:assertion", 
-                    ID: "_#{SecureRandom.uuid}", 
-                    Version: "2.0", 
-                    IssueInstant: Time.now.utc.strftime("%Y-%m-%dT%H:%M:%SZ"), 
-                    Destination: @assertion_consumer_service_url, 
-                    InResponseTo: @saml_request.id ) do |response|
-
-                response.tag!("saml:Issuer", @issuer)
-                response.tag!("samlp:Status") do |status|
-                    status.tag!("samlp:StatusCode", Value: "urn:oasis:names:tc:SAML:2.0:status:Success")
+            builder = Nokogiri::XML::Builder.new(encoding: 'UTF-8') do |xml|
+                xml['samlp'].Response("xmlns:samlp" => "urn:oasis:names:tc:SAML:2.0:protocol",
+                                      "xmlns:saml" => "urn:oasis:names:tc:SAML:2.0:assertion",
+                                      ID: "_#{SecureRandom.uuid}",
+                                      Version: "2.0",
+                                      IssueInstant: Time.now.utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                                      Destination: @assertion_consumer_service_url,
+                                      InResponseTo: @saml_request.id) do
+                    xml['saml'].Issuer SimpleSaml.config.entity_id
+                    xml['samlp'].Status do
+                        xml['samlp'].StatusCode(Value: "urn:oasis:names:tc:SAML:2.0:status:Success")
+                    end
                 end
-                # Assuming @assertion#build returns a string of XML
-                response << @assertion.build
+            end
+            assertion = @assertion.build
+            assertion_doc = Nokogiri::XML(assertion)
+
+            builder.doc.root.add_child(assertion_doc.root)
+            builder.doc.to_xml(save_with: Nokogiri::XML::Node::SaveOptions::AS_XML)
+        end
+
+        def encode 
+            # Initialize a new Deflate object with BEST_COMPRESSION and no zlib header
+            deflater = Zlib::Deflate.new(Zlib::BEST_COMPRESSION, -Zlib::MAX_WBITS)
+            deflated_xml = deflater.deflate(self.build, Zlib::FINISH)
+            deflater.close
+
+            base64_encoded_xml = Base64.strict_encode64(deflated_xml)
+
+            if defined?(Rails)
+                base64_encoded_xml # assume rails will handle encoding
+            else
+                CGI.escape(base64_encoded_xml)
             end
 
-            doc = Nokogiri::XML(xml_str) { |config| config.default_xml.noblanks }
-            pretty_xml = doc.to_xml(indent: 2)
-            puts pretty_xml
+            
+            
         end
+
+        
     end
 end
