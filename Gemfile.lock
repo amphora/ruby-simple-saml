@@ -50,7 +50,9 @@ GEM
     minitest (5.22.3)
     multi_xml (0.6.0)
     mutex_m (0.2.0)
-    nokogiri (1.16.3-arm64-darwin)
+    nokogiri (1.16.5-arm64-darwin)
+      racc (~> 1.4)
+    nokogiri (1.16.5-x86_64-linux)
       racc (~> 1.4)
     parallel (1.24.0)
     parser (3.3.0.5)
@@ -110,6 +112,7 @@ GEM
 
 PLATFORMS
   arm64-darwin-23
+  x86_64-linux
 
 DEPENDENCIES
   debug
