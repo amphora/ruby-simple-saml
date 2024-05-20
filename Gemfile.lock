@@ -52,6 +52,8 @@ GEM
     mutex_m (0.2.0)
     nokogiri (1.16.3-arm64-darwin)
       racc (~> 1.4)
+    nokogiri (1.16.3-x86_64-linux)
+      racc (~> 1.4)
     parallel (1.24.0)
     parser (3.3.0.5)
       ast (~> 2.4.1)
@@ -66,7 +68,8 @@ GEM
     regexp_parser (2.9.0)
     reline (0.5.1)
       io-console (~> 0.5)
-    rexml (3.2.6)
+    rexml (3.2.8)
+      strscan (>= 3.0.9)
     rspec (3.13.0)
       rspec-core (~> 3.13.0)
       rspec-expectations (~> 3.13.0)
@@ -95,6 +98,7 @@ GEM
       parser (>= 3.3.0.4)
     ruby-progressbar (1.13.0)
     stringio (3.1.0)
+    strscan (3.1.0)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     unicode-display_width (2.5.0)
@@ -110,6 +114,7 @@ GEM
 
 PLATFORMS
   arm64-darwin-23
+  x86_64-linux
 
 DEPENDENCIES
   debug
