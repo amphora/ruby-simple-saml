@@ -12,7 +12,7 @@ module SimpleSaml
 
             # @issuer = saml_request&.issuer || issuer
             @principal = principal
-            @audience = saml_request&.provider_name || saml_request&.issuer || issuer
+            @audience = audience || saml_request&.provider_name || saml_request&.issuer || issuer
             @assertion_consumer_service_url = saml_request&.assertion_consumer_service_url || assertion_consumer_service_url
             @sign = sign
 

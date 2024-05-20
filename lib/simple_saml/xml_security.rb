@@ -29,7 +29,6 @@ module SimpleSaml
                         end
                     end
                     xml['ds'].SignatureValue nil
-                # If you have KeyInfo or other elements, they would go here
                 xml['ds'].KeyInfo do
                     xml['ds'].X509Data do
                         # Assuming SimpleSaml.config.x509_certificate returns the certificate as a string

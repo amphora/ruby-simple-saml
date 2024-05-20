@@ -56,6 +56,6 @@ module SimpleSaml
         end
         
         xml
-      end
+    end
 
 end
