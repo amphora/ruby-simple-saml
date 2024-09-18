@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-puts $LOAD_PATH
 require 'xmldsig'
 require "simple_saml"
 
